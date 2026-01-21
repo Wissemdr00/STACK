@@ -278,7 +278,7 @@ Contributions welcome! Please read the architecture docs first:
 
 ## 📄 License
 
-MIT © Your Name
+MIT © Wissem dridi
 
 ---
 
