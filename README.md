@@ -1,76 +1,112 @@
-# Video Render Platform
+# 🎬 Video Render Platform
 
-A production-grade asynchronous video rendering platform built with NestJS, demonstrating distributed systems patterns, async job orchestration, and media processing pipelines.
+A **production-grade async video rendering system** built with NestJS, demonstrating distributed systems patterns, async job orchestration, and media processing pipelines.
 
-## 🎯 Overview
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10.x-e0234e?logo=nestjs)](https://nestjs.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-This platform accepts declarative JSON timelines describing video compositions (images + text) and renders MP4 videos asynchronously using FFmpeg. It's designed as a portfolio-ready demonstration of:
+---
 
-- **Async Job Orchestration** with BullMQ
-- **Media Processing Pipelines** with FFmpeg
-- **Clean Backend Architecture** with NestJS modules
-- **Real-World Failure Handling** with retries and error recovery
+## ✨ What It Does
+
+Submit a **declarative JSON timeline** describing a video (images + text overlays) → Get back a **rendered MP4 video**.
+
+```json
+{
+  "timeline": {
+    "clips": [
+      { "image": "https://picsum.photos/1920/1080", "text": "Welcome!", "duration": 3 },
+      { "image": "https://picsum.photos/1920/1080?random=2", "text": "Scene Two", "duration": 5 }
+    ]
+  }
+}
+```
+
+The system handles everything asynchronously: queuing, rendering with FFmpeg, uploading to S3, and notifying you when it's done.
+
+---
+
+## 🚀 Quick Start (Try It Now!)
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/video-render-platform.git
+cd video-render-platform
+
+# Start everything
+docker-compose up -d
+
+# Wait ~30 seconds for services to initialize, then open:
+# 👉 http://localhost:8080 - Web UI
+# 👉 http://localhost:9001 - MinIO Console (minioadmin/minioadmin)
+```
+
+That's it! Submit a render job through the web UI and watch the magic happen.
+
+---
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Client    │────▶│   NestJS    │────▶│    Redis    │
-│             │     │     API     │     │   (BullMQ)  │
+│   Next.js   │────▶│   NestJS    │────▶│    Redis    │
+│   Web UI    │     │     API     │     │   (BullMQ)  │
+│   :8080     │     │    :3000    │     │    :6379    │
 └─────────────┘     └─────────────┘     └──────┬──────┘
                            │                   │
                            ▼                   ▼
                     ┌─────────────┐     ┌─────────────┐
-                    │  PostgreSQL │     │   Workers   │
-                    │  (Job State)│◀────│  (FFmpeg)   │
+                    │  PostgreSQL │◀────│   Workers   │
+                    │    :5432    │     │  (FFmpeg)   │
                     └─────────────┘     └──────┬──────┘
                                                │
                                                ▼
                                         ┌─────────────┐
-                                        │   MinIO/S3  │
-                                        │   (Videos)  │
+                                        │ MinIO (S3)  │
+                                        │    :9000    │
                                         └─────────────┘
 ```
 
-## 🚀 Quick Start
+### Key Design Decisions
 
-### Prerequisites
+| Principle | Implementation |
+|-----------|----------------|
+| **Stateless API** | All state persisted to PostgreSQL |
+| **Async Processing** | BullMQ job queue decouples API from heavy rendering |
+| **Worker Isolation** | FFmpeg runs in dedicated containers, horizontally scalable |
+| **Failure Handling** | 3 retries with exponential backoff, comprehensive error tracking |
+| **Idempotency** | Same input always produces same output |
 
-- Docker and Docker Compose
-- Node.js 20+ (for development)
-- pnpm (`npm install -g pnpm`)
+---
 
-### Start with Docker
+## 🛠️ Tech Stack
 
-```bash
-# Clone and navigate to project
-cd video-render-platform
+### Backend
+- **NestJS** with Fastify adapter
+- **TypeORM** for PostgreSQL
+- **BullMQ** (Redis) for job queues
+- **class-validator** for input validation
 
-# Start all services
-docker-compose up -d
+### Rendering
+- **FFmpeg** for video processing
+- Custom timeline compiler (JSON → FFmpeg commands)
 
-# View logs
-docker-compose logs -f
-```
+### Frontend
+- **Next.js 15** with App Router
+- **shadcn/ui** components
+- **Tailwind CSS**
 
-### Development Setup
+### Infrastructure
+- **Docker Compose** for local development
+- **MinIO** (S3-compatible object storage)
+- **PostgreSQL** for job persistence
+- **Redis** for job queuing
 
-```bash
-# Install dependencies
-pnpm install
-
-# Copy environment file
-cp .env.example .env
-
-# Start infrastructure
-docker-compose up postgres redis minio minio-init -d
-
-# Run API (in one terminal)
-pnpm dev:api
-
-# Run Worker (in another terminal)
-pnpm dev:worker
-```
+---
 
 ## 📡 API Reference
 
@@ -84,26 +120,19 @@ Content-Type: application/json
   "timeline": {
     "clips": [
       {
-        "image": "https://picsum.photos/1920/1080",
-        "text": "Welcome to the video!",
+        "image": "https://example.com/image.jpg",
+        "text": "Hello World",
         "duration": 3
-      },
-      {
-        "image": "https://picsum.photos/1920/1080?random=2",
-        "text": "This is the second scene",
-        "duration": 5
       }
     ]
   },
-  "callbackUrl": "https://your-app.com/webhook"
+  "callbackUrl": "https://your-webhook.com/notify"  // optional
 }
 ```
 
-**Response (202 Accepted):**
+**Response:** `202 Accepted`
 ```json
-{
-  "jobId": "550e8400-e29b-41d4-a716-446655440000"
-}
+{ "jobId": "550e8400-e29b-41d4-a716-446655440000" }
 ```
 
 ### Get Job Status
@@ -117,129 +146,142 @@ GET /jobs/:id
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "status": "completed",
-  "outputUrl": "https://minio:9000/video-outputs/outputs/550e8400-e29b-41d4-a716-446655440000.mp4?signature=...",
+  "outputUrl": "https://...",
   "createdAt": "2024-01-15T10:30:00.000Z",
-  "updatedAt": "2024-01-15T10:30:45.000Z",
   "completedAt": "2024-01-15T10:30:45.000Z"
 }
 ```
 
-### Job Status Values
+### Job Statuses
 
 | Status | Description |
 |--------|-------------|
-| `queued` | Job is waiting in queue |
-| `processing` | Worker is rendering the video |
-| `completed` | Video is ready for download |
-| `failed` | Job failed after all retries |
+| `queued` | Waiting in queue |
+| `processing` | FFmpeg is rendering |
+| `completed` | Video ready for download |
+| `failed` | Failed after retries |
+
+---
 
 ## 📁 Project Structure
 
 ```
 video-render-platform/
 ├── apps/
-│   ├── api/                    # NestJS API application
-│   │   └── src/
-│   │       ├── jobs/           # Job management module
-│   │       ├── queue/          # BullMQ producer
-│   │       ├── database/       # TypeORM configuration
-│   │       └── common/         # Shared utilities
-│   │
-│   └── worker/                 # NestJS Worker application
-│       └── src/
-│           ├── processors/     # BullMQ job processors
-│           ├── rendering/      # FFmpeg/Timeline logic
-│           └── storage/        # S3 upload service
-│
-├── libs/                       # Shared libraries
-│   ├── types/                  # TypeScript interfaces
-│   ├── schemas/                # class-validator schemas
-│   └── constants/              # Shared constants
-│
-├── docker/                     # Dockerfiles
-├── docs/                       # Documentation
+│   ├── api/            # NestJS REST API
+│   ├── worker/         # Background job processor
+│   └── web/            # Next.js demo UI
+├── libs/
+│   ├── types/          # Shared TypeScript interfaces
+│   ├── schemas/        # Validation schemas
+│   └── constants/      # Shared configuration
+├── docker/             # Dockerfiles
+├── docs/               # Additional documentation
 └── docker-compose.yml
 ```
 
-## ⚙️ Configuration
+---
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_HOST` | PostgreSQL host | `localhost` |
-| `DATABASE_PORT` | PostgreSQL port | `5432` |
-| `REDIS_HOST` | Redis host | `localhost` |
-| `REDIS_PORT` | Redis port | `6379` |
-| `S3_ENDPOINT` | S3/MinIO endpoint | `http://localhost:9000` |
-| `S3_BUCKET` | Output bucket name | `video-outputs` |
-| `WORKER_CONCURRENCY` | Parallel jobs per worker | `2` |
-| `JOB_TIMEOUT_MS` | Max render time | `300000` (5 min) |
+## 🔧 Development
 
-## 🔧 Technical Details
-
-### Job Lifecycle
-
-```
-CLIENT                 API                 REDIS              WORKER              S3
-   │                    │                    │                   │                │
-   │─POST /jobs────────▶│                    │                   │                │
-   │                    │─Create Job─────────│                   │                │
-   │                    │─Enqueue────────────▶│                   │                │
-   │◀──202 {jobId}──────│                    │                   │                │
-   │                    │                    │─Dequeue──────────▶│                │
-   │                    │                    │                   │─Download imgs──│
-   │                    │                    │                   │─Run FFmpeg─────│
-   │                    │                    │                   │─Upload MP4────▶│
-   │                    │◀─Mark Complete─────│◀──────────────────│                │
-   │─GET /jobs/:id─────▶│                    │                   │                │
-   │◀──{status,url}─────│                    │                   │                │
-```
-
-### Failure Handling
-
-| Failure | Detection | Recovery |
-|---------|-----------|----------|
-| Invalid Input | class-validator | 400 response immediately |
-| Image Download | Axios timeout | Retry with backoff |
-| FFmpeg Crash | Non-zero exit | Retry up to 3 times |
-| Timeout | BullMQ job timeout | Mark failed, cleanup |
-| Worker Restart | Stalled job detection | Auto-retry stalled jobs |
-| S3 Upload | AWS SDK error | Retry, then fail job |
-
-### Rendering Pipeline
-
-1. **Compile**: Timeline JSON → FFmpeg filter complex
-2. **Download**: Fetch images to temp directory
-3. **Render**: Execute FFmpeg with timeout
-4. **Upload**: Stream output to S3
-5. **Cleanup**: Remove temp files
-
-## 🧪 Testing
+### Local Setup (without Docker)
 
 ```bash
-# Unit tests
-pnpm test
+# Install dependencies
+pnpm install
 
-# E2E tests (requires running services)
-pnpm test:e2e
+# Start infrastructure only
+docker-compose up postgres redis minio minio-init -d
 
-# Manual test
+# Copy environment variables
+cp .env.example .env
+
+# Run API
+pnpm dev:api
+
+# Run Worker (separate terminal)
+pnpm dev:worker
+
+# Run Web UI (separate terminal)
+cd apps/web && npm run dev
+```
+
+### Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev:api` | Start API in watch mode |
+| `pnpm dev:worker` | Start worker in watch mode |
+| `pnpm build` | Build all packages |
+| `pnpm test` | Run tests |
+| `docker-compose up -d` | Start full stack |
+| `docker-compose logs -f` | View logs |
+
+---
+
+## 🧪 Testing the System
+
+### Via Web UI
+1. Open http://localhost:8080
+2. Add clips with image URLs and text
+3. Click "Submit Render Job"
+4. Watch the status update in real-time
+5. Download your rendered video!
+
+### Via cURL
+```bash
+# Submit job
 curl -X POST http://localhost:3000/jobs \
   -H "Content-Type: application/json" \
-  -d '{
-    "timeline": {
-      "clips": [
-        {"image": "https://picsum.photos/1920/1080", "text": "Hello", "duration": 3}
-      ]
-    }
-  }'
+  -d '{"timeline":{"clips":[{"image":"https://picsum.photos/1920/1080","text":"Hello","duration":3}]}}'
+
+# Check status
+curl http://localhost:3000/jobs/{jobId}
 ```
+
+---
 
 ## 📊 Monitoring
 
-- **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
-- **PostgreSQL**: Connect at localhost:5432
-- **Redis**: Connect at localhost:6379
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| Web UI | http://localhost:8080 | - |
+| API | http://localhost:3000 | - |
+| MinIO Console | http://localhost:9001 | minioadmin / minioadmin |
+| PostgreSQL | localhost:5433 | postgres / postgres |
+
+---
+
+## 🔒 Failure Handling
+
+The system is designed to be resilient:
+
+- **Invalid Input:** Rejected immediately with 400 error
+- **Image Download Failures:** Retry with exponential backoff
+- **FFmpeg Crashes:** Up to 3 retries
+- **Timeouts:** 5-minute max render time
+- **Worker Crashes:** Stalled jobs automatically retried
+
+See [docs/failure-handling.md](docs/failure-handling.md) for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please read the architecture docs first:
+
+- [docs/architecture.md](docs/architecture.md) - System design
+- [docs/rendering-pipeline.md](docs/rendering-pipeline.md) - FFmpeg details
+- [docs/api.md](docs/api.md) - Full API reference
+
+---
 
 ## 📄 License
 
-MIT
+MIT © Your Name
+
+---
+
+<p align="center">
+  <strong>Built with ❤️ to demonstrate production-grade backend engineering</strong>
+</p>
