@@ -1,0 +1,5 @@
+﻿src/processors/render.processor.ts(179,7): error TS2322: Type 'JobError' is not assignable to type '(() => string) | _QueryDeepPartialEntity<JobError | undefined>'.
+  Type 'JobError' is not assignable to type '_QueryDeepPartialEntity<JobError>'.
+    Types of property 'details' are incompatible.
+      Type 'Record<string, unknown> | undefined' is not assignable to type '(() => string) | _QueryDeepPartialEntity<Record<string, unknown> | undefined>'.
+        Type 'Record<string, unknown>' is not assignable to type '(() => string) | _QueryDeepPartialEntity<Record<string, unknown> | undefined>'.

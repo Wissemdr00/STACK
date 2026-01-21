@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Render Platform - Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a25;
+      --border: #2a2a3a;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0b0;
+      --text-muted: #6a6a7a;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--gradient);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    /* Clips Container */
+    .clips-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .clip-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      position: relative;
+    }
+
+    .clip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .clip-number {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .clip-remove {
+      background: none;
+      border: none;
+      color: var(--error);
+      cursor: pointer;
+      font-size: 1.25rem;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .clip-remove:hover {
+      opacity: 1;
+    }
+
+    .clip-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .clip-fields .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .clip-fields input {
+      padding: 0.6rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--gradient);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .status-queued {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .status-processing {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent);
+    }
+
+    .status-completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    .status-failed {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Job Result */
+    .job-result {
+      margin-top: 1.5rem;
+    }
+
+    .job-info {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .job-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+    }
+
+    .job-info-label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .job-info-value {
+      font-weight: 500;
+      font-size: 0.875rem;
+      font-family: 'Monaco', 'Consolas', monospace;
+    }
+
+    /* Video Player */
+    .video-container {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+    }
+
+    .video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .video-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      gap: 0.5rem;
+    }
+
+    .video-placeholder-icon {
+      font-size: 3rem;
+      opacity: 0.5;
+    }
+
+    /* Error Message */
+    .error-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .error-box p {
+      color: var(--error);
+      font-size: 0.875rem;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>🎬 Video Render Platform</h1>
+      <p>Create videos from images and text overlays using FFmpeg</p>
+    </header>
+
+    <div class="layout">
+      <!-- Left Panel: Create Job -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📝</div>
+          <h2>Create Render Job</h2>
+        </div>
+
+        <form id="jobForm">
+          <div class="clips-container" id="clipsContainer">
+            <!-- Clips will be added here dynamically -->
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary" onclick="addClip()">
+              ➕ Add Clip
+            </button>
+          </div>
+
+          <div class="form-group" style="margin-top: 1.5rem;">
+            <label>Callback URL (optional)</label>
+            <input type="url" id="callbackUrl" placeholder="https://your-app.com/webhook">
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn" style="width: 100%; margin-top: 0.5rem;">
+            🚀 Submit Render Job
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Panel: Job Status -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📊</div>
+          <h2>Job Status</h2>
+        </div>
+
+        <div id="jobStatus">
+          <div class="empty-state">
+            <div class="empty-state-icon">🎥</div>
+            <p>Submit a job to see its status here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+    let currentJobId = null;
+    let pollInterval = null;
+
+    // Initialize with one clip
+    document.addEventListener('DOMContentLoaded', () => {
+      addClip();
+    });
+
+    function addClip() {
+      const container = document.getElementById('clipsContainer');
+      const clipCount = container.children.length + 1;
+      
+      const clipEl = document.createElement('div');
+      clipEl.className = 'clip-item';
+      clipEl.innerHTML = `
+        <div class="clip-header">
+          <span class="clip-number">Clip ${clipCount}</span>
+          <button type="button" class="clip-remove" onclick="removeClip(this)" ${clipCount === 1 ? 'style="display:none"' : ''}>✕</button>
+        </div>
+        <div class="clip-fields">
+          <input type="url" class="clip-image full-width" placeholder="Image URL (e.g., https://picsum.photos/1920/1080)" required>
+          <input type="text" class="clip-text" placeholder="Text overlay" maxlength="200">
+          <input type="number" class="clip-duration" placeholder="Duration (s)" min="1" max="30" value="3" required>
+        </div>
+      `;
+      container.appendChild(clipEl);
+      updateClipNumbers();
+    }
+
+    function removeClip(btn) {
+      const clipItem = btn.closest('.clip-item');
+      clipItem.remove();
+      updateClipNumbers();
+    }
+
+    function updateClipNumbers() {
+      const clips = document.querySelectorAll('.clip-item');
+      clips.forEach((clip, index) => {
+        clip.querySelector('.clip-number').textContent = `Clip ${index + 1}`;
+        const removeBtn = clip.querySelector('.clip-remove');
+        removeBtn.style.display = clips.length > 1 ? 'block' : 'none';
+      });
+    }
+
+    function getClipsData() {
+      const clips = [];
+      document.querySelectorAll('.clip-item').forEach(clipEl => {
+        clips.push({
+          image: clipEl.querySelector('.clip-image').value,
+          text: clipEl.querySelector('.clip-text').value || '',
+          duration: parseInt(clipEl.querySelector('.clip-duration').value) || 3
+        });
+      });
+      return clips;
+    }
+
+    document.getElementById('jobForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+      const clips = getClipsData();
+      const callbackUrl = document.getElementById('callbackUrl').value;
+
+      const payload = {
+        timeline: { clips }
+      };
+      
+      if (callbackUrl) {
+        payload.callbackUrl = callbackUrl;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/jobs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to submit job');
+        }
+
+        const data = await response.json();
+        currentJobId = data.jobId;
+        
+        // Start polling for status
+        startPolling();
+        
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '🚀 Submit Render Job';
+      }
+    });
+
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      
+      // Initial fetch
+      fetchJobStatus();
+      
+      // Poll every 2 seconds
+      pollInterval = setInterval(fetchJobStatus, 2000);
+    }
+
+    async function fetchJobStatus() {
+      if (!currentJobId) return;
+
+      try {
+        const response = await fetch(`${API_URL}/jobs/${currentJobId}`);
+        const job = await response.json();
+        
+        renderJobStatus(job);
+        
+        // Stop polling if job is complete or failed
+        if (job.status === 'completed' || job.status === 'failed') {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      } catch (error) {
+        console.error('Failed to fetch job status:', error);
+      }
+    }
+
+    function renderJobStatus(job) {
+      const container = document.getElementById('jobStatus');
+      
+      const statusClass = `status-${job.status}`;
+      const isComplete = job.status === 'completed';
+      const isFailed = job.status === 'failed';
+      
+      let videoHtml = `
+        <div class="video-placeholder">
+          <div class="video-placeholder-icon">🎬</div>
+          <p>${job.status === 'processing' ? 'Rendering in progress...' : 'Video will appear here'}</p>
+        </div>
+      `;
+      
+      if (isComplete && job.outputUrl) {
+        videoHtml = `<video controls autoplay src="${job.outputUrl}"></video>`;
+      }
+
+      let errorHtml = '';
+      if (isFailed && job.error) {
+        errorHtml = `
+          <div class="error-box">
+            <p><strong>Error:</strong> ${job.error.message}</p>
+            ${job.error.code ? `<p><strong>Code:</strong> ${job.error.code}</p>` : ''}
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="job-result">
+          <div class="job-info">
+            <div class="job-info-row">
+              <span class="job-info-label">Job ID</span>
+              <span class="job-info-value">${job.id.slice(0, 8)}...${job.id.slice(-4)}</span>
+            </div>
+            <div class="job-info-row">
+              <span class="job-info-label">Status</span>
+              <span class="status-badge ${statusClass}">
+                <span class="status-dot"></span>
+                ${job.status}
+              </span>
+            </div>
+            <div class="job-info-row">
+              <span class="job-info-label">Created</span>
+              <span class="job-info-value">${new Date(job.createdAt).toLocaleTimeString()}</span>
+            </div>
+            ${job.completedAt ? `
+              <div class="job-info-row">
+                <span class="job-info-label">Completed</span>
+                <span class="job-info-value">${new Date(job.completedAt).toLocaleTimeString()}</span>
+              </div>
+            ` : ''}
+          </div>
+          
+          <div class="video-container">
+            ${videoHtml}
+          </div>
+          
+          ${errorHtml}
+          
+          ${isComplete && job.outputUrl ? `
+            <a href="${job.outputUrl}" download class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">
+              ⬇️ Download Video
+            </a>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function showError(message) {
+      const container = document.getElementById('jobStatus');
+      container.innerHTML = `
+        <div class="error-box">
+          <p><strong>Error:</strong> ${message}</p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

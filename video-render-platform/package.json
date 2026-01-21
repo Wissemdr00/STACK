@@ -1,0 +1,30 @@
+{
+  "name": "video-render-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-grade async video rendering platform",
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:api": "pnpm --filter @video-render/api build",
+    "build:worker": "pnpm --filter @video-render/worker build",
+    "start:api": "pnpm --filter @video-render/api start",
+    "start:worker": "pnpm --filter @video-render/worker start",
+    "dev:api": "pnpm --filter @video-render/api start:dev",
+    "dev:worker": "pnpm --filter @video-render/worker start:dev",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @video-render/api test:e2e",
+    "lint": "pnpm -r lint",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "video-rendering",
+    "nestjs",
+    "ffmpeg",
+    "bullmq",
+    "async-processing"
+  ],
+  "author": "",
+  "license": "MIT"
+}
